@@ -1,0 +1,33 @@
+#+TITLE: Knapsack Solver
+#+AUTHOR: Sholde
+#+DATE: 2021
+
+It is a simple Knapsack Solver. Obviously, it just support Linux OS. It use
+*csv* file for input and print the result on *stdout*.
+
+* Dependencies
+
+  - gcc
+  - make
+
+* Installation
+
+#+BEGIN_SRC bash
+$ git clone https://github.com/Sholde/knapsack_solver.git
+$ make
+#+END_SRC
+
+* Usage
+
+#+BEGIN_SRC bash
+$ ./ks [CSV FILE]
+#+END_SRC
+
+** Help
+
+#+BEGIN_SRC bash
+$ ./ks -h
+or
+$ ./ks --help
+#+END_SRC
+
