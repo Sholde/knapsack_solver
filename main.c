@@ -157,15 +157,40 @@ void solve_knapsack(knapsack_t *ks)
   
 }
 
+void print_error(char *bin)
+{
+  fprintf(stderr, "Usage: %s [OPTION] [FILE]...\n", bin);
+  fprintf(stderr, "try %s --help to get more information.\n", bin);
+}
+
+void print_help(char *bin)
+{
+  fprintf(stderr, "Usage: %s [OPTION] [FILE]...\n", bin);
+  fprintf(stderr, "  -h, --help     print this help\n");
+  fprintf(stderr, "  -i, --input    must be csv file with 2 column: \"value\", \"weight\"." \
+          " Use this csv file to init the knapsack solver.\n");
+}
+
 int main(int argc, char **argv)
 {
-  if (argc != 2)
-    return printf("Error: needed the path of csv file in argument.\n"), 1;
+  if (argc < 2)
+    return print_error(argv[0]), 1;
 
-  knapsack_t *ks = parse_csv_file(argv[1]);
-  print_knapsack(ks);
-  solve_knapsack(ks);
-  free_knapsack(ks);
+  if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
+    {
+      print_help(argv[0]);
+    }
+  else if (strcmp(argv[1], "-i") == 0 || strcmp(argv[1], "--input") == 0)
+    {
+      knapsack_t *ks = parse_csv_file(argv[2]);
+      print_knapsack(ks);
+      solve_knapsack(ks);
+      free_knapsack(ks);
+    }
+  else
+    {
+      return print_error(argv[0]), 1;
+    }
   
   return 0;
 }

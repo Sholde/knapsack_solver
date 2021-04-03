@@ -5,13 +5,13 @@ DFLAGS=-g3
 
 .PHONY: all clean
 
-all: main
+all: ks
 
-main: main.o
+ks: main.o
 	$(CC) $^ -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(OFLAGS) $(DFLAGS) -c $< -o $@
 
 clean:
-	rm -Rf *~ *.o main
+	rm -Rf *~ *.o ks
