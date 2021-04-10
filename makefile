@@ -7,7 +7,7 @@ DFLAGS=-g3
 
 all: ks
 
-ks: main.o
+ks: main.o knapsack.o display.o
 	$(CC) $^ -o $@
 
 %.o: %.c
