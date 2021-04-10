@@ -6,6 +6,7 @@ typedef unsigned long long u64;
 
 typedef struct knapsack_s
 {
+  u64 max_weight;
   u64 size;
   double *value;
   double *weight;
@@ -143,6 +144,21 @@ void free_knapsack(knapsack_t *ks)
     }
 }
 
+void exchange_knapsack(knapsack_t *ks, double *value_by_weight, u64 first, u64 second)
+{
+  double tmp_value = ks->value[first];
+  double tmp_weight = ks->weight[first];
+  double tmp_vbw = value_by_weight[first];
+
+  ks->value[first] = ks->value[second];
+  ks->weight[first] = ks->weight[second];
+  value_by_weight[first] = value_by_weight[second];
+
+  ks->value[second] = tmp_value;
+  ks->weight[second] = tmp_weight;
+  value_by_weight[second] = tmp_vbw;
+}
+
 void print_knapsack(knapsack_t *ks)
 {
   fprintf(stderr, "\"value\", \"weight\"\n");
@@ -152,9 +168,46 @@ void print_knapsack(knapsack_t *ks)
     }
 }
 
+void sort_knapsack(knapsack_t *ks)
+{
+  double *value_by_weight = malloc(sizeof(double) * ks->size);
+
+  // Computing
+  for (int i = 0; i < ks->size; i++)
+    {
+      value_by_weight[i] = ks->value[i] / ks->weight[i];
+    }
+
+  u64 index = 0;
+
+  // Sorting (The most simple algorithm)
+  for (u64 i = 0; i < ks->size; i++)
+    {
+      // Init to i
+      index = i;
+
+      // Search the maximum value by weight after i
+      for (u64 j = i + 1; j < ks->size; j++)
+        {
+          if (value_by_weight[index] < value_by_weight[j])
+            {
+              index = j;
+            }
+        }
+
+      // If we have we exchange it position with i
+      if (i != index)
+        {
+          exchange_knapsack(ks, value_by_weight, i, index);
+        }
+    }
+
+  free(value_by_weight);
+}
+
 void solve_knapsack(knapsack_t *ks)
 {
-  
+  sort_knapsack(ks);
 }
 
 void print_error(char *bin)
@@ -183,8 +236,10 @@ int main(int argc, char **argv)
   else if (strcmp(argv[1], "-i") == 0 || strcmp(argv[1], "--input") == 0)
     {
       knapsack_t *ks = parse_csv_file(argv[2]);
-      print_knapsack(ks);
+
       solve_knapsack(ks);
+      print_knapsack(ks);
+
       free_knapsack(ks);
     }
   else
