@@ -218,7 +218,7 @@ void print_error(char *bin)
 
 void print_help(char *bin)
 {
-  fprintf(stderr, "Usage: %s [OPTION] [FILE]...\n", bin);
+  fprintf(stderr, "Usage: %s [OPTION] [FILE] [MAX WEIGHT]\n", bin);
   fprintf(stderr, "  -h, --help     print this help\n");
   fprintf(stderr, "  -i, --input    must be csv file with 2 column: \"value\", \"weight\"." \
           " Use this csv file to init the knapsack solver.\n");
@@ -235,7 +235,12 @@ int main(int argc, char **argv)
     }
   else if (strcmp(argv[1], "-i") == 0 || strcmp(argv[1], "--input") == 0)
     {
+      if (argc != 4)
+        return print_error(argv[0]), 1;
+
       knapsack_t *ks = parse_csv_file(argv[2]);
+
+      ks->max_weight = atoll(argv[3]);
 
       solve_knapsack(ks);
       print_knapsack(ks);
