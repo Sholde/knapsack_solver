@@ -7,6 +7,9 @@ typedef unsigned long long u64;
 
 typedef struct knapsack_s
 {
+  u64 index;
+  u64 size_2;
+  
   double max_weight;
 
   u64 size;
@@ -14,11 +17,13 @@ typedef struct knapsack_s
   double *weight;
 
   double *value_by_weight;
+  double *max_value;
   byte *taken;
 } knapsack_t;
 
 #define CSV_LINE_SIZE 128
 #define max(a, b) (a < b ? b : a)
+#define power2(a) (1 << a)
 
 const char *getfield(char *line, int num)
 {
@@ -140,9 +145,14 @@ knapsack_t *init_knapsack(char *path, double max_weight)
 
   parse_csv_file(ks, path);
 
+  ks->size_2 = power2(ks->size);
+
   ks->max_weight = max_weight;
   ks->value_by_weight = malloc(sizeof(double) * ks->size);
+  ks->max_value = malloc(sizeof(double) * ks->size_2);
   ks->taken = malloc(sizeof(byte) * ks->size);
+
+  ks->index = 0;
 
   return ks;
 }
@@ -159,6 +169,9 @@ void free_knapsack(knapsack_t *ks)
 
       if (ks->value_by_weight)
         free(ks->value_by_weight);
+
+      if (ks->max_value)
+        free(ks->max_value);
 
       if (ks->taken)
         free(ks->taken);
@@ -233,26 +246,66 @@ double compute_value_knapsack(knapsack_t *ks)
 void solve_knapsack(knapsack_t *ks, u64 index, double effective_weight)
 {
   if (index >= ks->size)
-    return;
+    {
+      if (effective_weight < 0)
+        ks->max_value[ks->index] = -1;
+      else
+        ks->max_value[ks->index] = compute_value_knapsack(ks);
+      
+      ks->index++;
+      return;
+    }
+
+  if (effective_weight < 0)
+    {
+      ks->taken[index] = 0;
+      solve_knapsack(ks, index + 1, -1);
+      solve_knapsack(ks, index + 1, -1);
+      return;
+    }
 
   // Take index
-  ks->taken[index] = 1;
-  solve_knapsack(ks, index + 1, effective_weight + ks->weight[index]);
-  double value_taken = compute_value_knapsack(ks);
+  if (effective_weight + ks->weight[index] <= ks->max_weight)
+    {
+      ks->taken[index] = 1;
+      solve_knapsack(ks, index + 1, effective_weight + ks->weight[index]);
+    }
+  else
+    {
+      ks->taken[index] = 1;
+      solve_knapsack(ks, index + 1, -1);
+    }
+
 
   // Don't take index
   ks->taken[index] = 0;
   solve_knapsack(ks, index + 1, effective_weight);
-  double value_not_taken = compute_value_knapsack(ks);
+}
 
-  // Choose best
-  if (effective_weight + ks->weight[index] <= ks->max_weight && value_taken > value_not_taken)
+void search(knapsack_t *ks)
+{
+  u64 max_index = 0;
+  for (int i = 0; i < ks->size_2 - 1; i++)
     {
-      ks->taken[index] = 1;
+      if (ks->max_value[max_index] < ks->max_value[i])
+        {
+          max_index = i;
+        }
     }
-  else
+
+  for (int i = ks->size - 1; i >= 0; i--)
     {
-      ks->taken[index] = 0;
+      if (max_index % 2 == 0)
+        {
+
+          ks->taken[i] = 1;
+        }
+      else
+        {
+          ks->taken[i] = 0;
+        }
+
+      max_index = max_index / 2;
     }
 }
 
@@ -355,10 +408,12 @@ int main(int argc, char **argv)
         return print_error(argv[0]), 1;
 
       knapsack_t *ks = init_knapsack(argv[2], strtod(argv[3], NULL));
-      
+
       sort_knapsack(ks);
       solve_knapsack(ks, 0, 0.0);
 
+      search(ks);
+      
       print_knapsack(ks);
 
       free_knapsack(ks);
