@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "struct.h"
+#include "display.h"
 #include "knapsack.h"
 
 knapsack_t *init_knapsack(char *path, double max_weight)
