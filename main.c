@@ -3,37 +3,47 @@
 #include <string.h>
 #include <time.h>
 
+// Personal type
 typedef char               byte;
 typedef unsigned long long u64;
 
+// single variable firstn then array to optimize memory locality
 typedef struct knapsack_s
 {
+  // Implementation
   u64 index;
   u64 size_2;
-  
+
+  // Standart
   double max_weight;
 
   u64 size;
   double *value;
   double *weight;
 
+  // Implementation
   double *value_by_weight;
   double *max_value;
   byte *taken;
 } knapsack_t;
 
+// Constant
 #define CSV_LINE_SIZE 128
+
+// Macro
 #define max(a, b) (a < b ? b : a)
 #define power2(a) (1 << a)
 
 const char *getfield(char *line, int num)
 {
   const char *tok;
+
   for (tok = strtok(line, ", "); tok && *tok; tok = strtok(NULL, ", \n"))
     {
       if (!--num)
         return tok;
     }
+
   return NULL;  
 }
 
@@ -137,23 +147,30 @@ void parse_csv_file(knapsack_t *ks, char *path)
 
 knapsack_t *init_knapsack(char *path, double max_weight)
 {
+  // Allocate structure
   knapsack_t *ks = malloc(sizeof(knapsack_t));
+
+  // Default init
+  ks->index = 0;
   ks->size = 0;
+  ks->size_2 = 0;
   ks->value = NULL;
   ks->weight = NULL;
   ks->value_by_weight = NULL;
+  ks->max_value = NULL;
   ks->taken = NULL;
 
+  // Parsing file
   parse_csv_file(ks, path);
 
+  // Specific init
   ks->size_2 = power2(ks->size);
-
   ks->max_weight = max_weight;
+
+  // Allocate the remain
   ks->value_by_weight = malloc(sizeof(double) * ks->size);
   ks->max_value = malloc(sizeof(double) * ks->size_2);
   ks->taken = malloc(sizeof(byte) * ks->size);
-
-  ks->index = 0;
 
   return ks;
 }
@@ -183,14 +200,17 @@ void free_knapsack(knapsack_t *ks)
 
 void exchange_knapsack(knapsack_t *ks, u64 first, u64 second)
 {
+  // Bufferize
   double tmp_value = ks->value[first];
   double tmp_weight = ks->weight[first];
   double tmp_vbw = ks->value_by_weight[first];
 
+  // Put the second in the first
   ks->value[first] = ks->value[second];
   ks->weight[first] = ks->weight[second];
   ks->value_by_weight[first] = ks->value_by_weight[second];
 
+  // Put the first in the second
   ks->value[second] = tmp_value;
   ks->weight[second] = tmp_weight;
   ks->value_by_weight[second] = tmp_vbw;
@@ -246,6 +266,7 @@ double compute_value_knapsack(knapsack_t *ks)
 
 void solve_knapsack(knapsack_t *ks, u64 index, double effective_weight)
 {
+  // After leaves
   if (index >= ks->size)
     {
       if (effective_weight < 0)
@@ -257,6 +278,7 @@ void solve_knapsack(knapsack_t *ks, u64 index, double effective_weight)
       return;
     }
 
+  // We are full
   if (effective_weight < 0)
     {
       ks->taken[index] = 0;
@@ -271,7 +293,7 @@ void solve_knapsack(knapsack_t *ks, u64 index, double effective_weight)
       ks->taken[index] = 1;
       solve_knapsack(ks, index + 1, effective_weight + ks->weight[index]);
     }
-  else
+  else // take index but we are full
     {
       ks->taken[index] = 1;
       solve_knapsack(ks, index + 1, -1);
@@ -283,9 +305,11 @@ void solve_knapsack(knapsack_t *ks, u64 index, double effective_weight)
   solve_knapsack(ks, index + 1, effective_weight);
 }
 
-void search(knapsack_t *ks)
+void search_knapsack(knapsack_t *ks)
 {
+  // Search the index of the max value
   u64 max_index = 0;
+
   for (int i = 0; i < ks->size_2 - 1; i++)
     {
       if (ks->max_value[max_index] < ks->max_value[i])
@@ -294,11 +318,15 @@ void search(knapsack_t *ks)
         }
     }
 
+  // Reconstitute the main path
+  // We begin from the leaves
   for (int i = ks->size - 1; i >= 0; i--)
     {
+      // Left is taken and right is not taken
+      // So at left we have power of 2, and right not
+      // Thus we have taken if it is left (or power of 2)
       if (max_index % 2 == 0)
         {
-
           ks->taken[i] = 1;
         }
       else
@@ -306,6 +334,8 @@ void search(knapsack_t *ks)
           ks->taken[i] = 0;
         }
 
+      // Divide by 2 because we go up on tree
+      // (and each upstair have 2 times less nodes because we have binary tree)
       max_index = max_index / 2;
     }
 }
@@ -390,6 +420,7 @@ void print_knapsack(knapsack_t *ks)
           space += 1;
         }
     }
+
   print_nspace(space + shift);
   fprintf(stderr, "END\n");
 }
@@ -405,33 +436,33 @@ int main(int argc, char **argv)
     }
   else if (strcmp(argv[1], "-i") == 0 || strcmp(argv[1], "--input") == 0)
     {
-      //
+      // Check if we have 3 argument
       if (argc != 4)
         return print_error(argv[0]), 1;
 
-      //
+      // Initialisation
       knapsack_t *ks = init_knapsack(argv[2], strtod(argv[3], NULL));
 
       //
       double elapsed;
       struct timespec before, after;
 
-      //
+      // Measure time
       clock_gettime(CLOCK_MONOTONIC_RAW, &before);
       {
         sort_knapsack(ks);
         solve_knapsack(ks, 0, 0.0);
-        search(ks);
+        search_knapsack(ks);
       }
       clock_gettime(CLOCK_MONOTONIC_RAW, &after);
 
-      //
+      // Print knapsack
       print_knapsack(ks);
 
-      //
+      // Compute alapsed time
       elapsed = after.tv_nsec - before.tv_nsec;
 
-      //
+      // Check if measure is correct
       if (elapsed < 0)
         {
           fprintf(stderr, "Time in second(s): non-determinated\n");
@@ -444,7 +475,7 @@ int main(int argc, char **argv)
           fprintf(stderr, "Time in second(s): %f\n", elapsed);
         }
 
-      //
+      // Free knapsack
       free_knapsack(ks);
     }
   else
