@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 typedef char               byte;
 typedef unsigned long long u64;
@@ -404,18 +405,46 @@ int main(int argc, char **argv)
     }
   else if (strcmp(argv[1], "-i") == 0 || strcmp(argv[1], "--input") == 0)
     {
+      //
       if (argc != 4)
         return print_error(argv[0]), 1;
 
+      //
       knapsack_t *ks = init_knapsack(argv[2], strtod(argv[3], NULL));
 
-      sort_knapsack(ks);
-      solve_knapsack(ks, 0, 0.0);
+      //
+      double elapsed;
+      struct timespec before, after;
 
-      search(ks);
-      
+      //
+      clock_gettime(CLOCK_MONOTONIC_RAW, &before);
+      {
+        sort_knapsack(ks);
+        solve_knapsack(ks, 0, 0.0);
+        search(ks);
+      }
+      clock_gettime(CLOCK_MONOTONIC_RAW, &after);
+
+      //
       print_knapsack(ks);
 
+      //
+      elapsed = after.tv_nsec - before.tv_nsec;
+
+      //
+      if (elapsed < 0)
+        {
+          fprintf(stderr, "Time in second(s): non-determinated\n");
+        }
+      else
+        {
+          // nano-seconds to seconds
+          elapsed = elapsed / 1.0e9;
+
+          fprintf(stderr, "Time in second(s): %f\n", elapsed);
+        }
+
+      //
       free_knapsack(ks);
     }
   else
