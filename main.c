@@ -391,7 +391,7 @@ void print_knapsack(knapsack_t *ks)
         }
     }
   print_nspace(space + shift);
-  fprintf(stderr, "FIN\n");
+  fprintf(stderr, "END\n");
 }
 
 int main(int argc, char **argv)
