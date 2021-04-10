@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef unsigned long long ull;
+typedef unsigned long long u64;
 
 typedef struct knapsack_s
 {
-  ull size;
+  u64 size;
   double *value;
   double *weight;
 } knapsack_t;
@@ -24,9 +24,9 @@ const char *getfield(char *line, int num)
   return NULL;  
 }
 
-ull count_number_of_line(FILE *f)
+u64 count_number_of_line(FILE *f)
 {
-  ull size = 0;
+  u64 size = 0;
   char buff[CSV_LINE_SIZE];
   
   fseek(f, 0, SEEK_SET);
