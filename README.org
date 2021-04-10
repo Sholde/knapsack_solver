@@ -20,7 +20,7 @@ $ make
 * Usage
 
 #+BEGIN_SRC bash
-$ ./ks [CSV FILE]
+$ ./ks [OPTION] [FILE]...
 #+END_SRC
 
 ** Help
@@ -31,3 +31,37 @@ or
 $ ./ks --help
 #+END_SRC
 
+* Example
+
+#+BEGIN_SRC json
+$ ./ks -i test.csv 2
+Knapsack problem input:
+ - max weight: 2.000000
+ - file input:
+     "value", "weight"
+     1.000000, 0.100000
+     4.000000, 1.100000
+     5.000000, 1.900000
+     2.000000, 2.200000
+     3.000000, 4.000000
+
+Result:
+ - max value: 6.000000
+ - list of value taken:
+     "value", "weight"
+     1.000000, 0.100000
+     5.000000, 1.900000
+ - tree:
+                              1.0, 0.1
+                               /
+                           4.0, 1.1
+                                \
+                              5.0, 1.9
+                               /
+                           2.0, 2.2
+                                \
+                              3.0, 4.0
+                                   \
+                                    END
+Time in second(s): 0.000001
+#+END_SRC
