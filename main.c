@@ -2,17 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef char               byte;
 typedef unsigned long long u64;
 
 typedef struct knapsack_s
 {
-  u64 max_weight;
+  double max_weight;
+
   u64 size;
   double *value;
   double *weight;
+
+  double *value_by_weight;
+  byte *taken;
 } knapsack_t;
 
 #define CSV_LINE_SIZE 128
+#define max(a, b) (a < b ? b : a)
 
 const char *getfield(char *line, int num)
 {
@@ -44,13 +50,8 @@ u64 count_number_of_line(FILE *f)
 
 void free_knapsack(knapsack_t *ks);
 
-knapsack_t *parse_csv_file(char *path)
+void parse_csv_file(knapsack_t *ks, char *path)
 {
-  knapsack_t *ks = malloc(sizeof(knapsack_t));
-  ks->size = 0;
-  ks->value = NULL;
-  ks->weight = NULL;
-
   // Open the file
   FILE *f = fopen(path, "r");
 
@@ -126,6 +127,22 @@ knapsack_t *parse_csv_file(char *path)
     }
 
   fclose(f);
+}
+
+knapsack_t *init_knapsack(char *path, double max_weight)
+{
+  knapsack_t *ks = malloc(sizeof(knapsack_t));
+  ks->size = 0;
+  ks->value = NULL;
+  ks->weight = NULL;
+  ks->value_by_weight = NULL;
+  ks->taken = NULL;
+
+  parse_csv_file(ks, path);
+
+  ks->max_weight = max_weight;
+  ks->value_by_weight = malloc(sizeof(double) * ks->size);
+  ks->taken = malloc(sizeof(byte) * ks->size);
 
   return ks;
 }
@@ -140,42 +157,37 @@ void free_knapsack(knapsack_t *ks)
       if (ks->weight)
         free(ks->weight);
 
+      if (ks->value_by_weight)
+        free(ks->value_by_weight);
+
+      if (ks->taken)
+        free(ks->taken);
+
       free(ks);
     }
 }
 
-void exchange_knapsack(knapsack_t *ks, double *value_by_weight, u64 first, u64 second)
+void exchange_knapsack(knapsack_t *ks, u64 first, u64 second)
 {
   double tmp_value = ks->value[first];
   double tmp_weight = ks->weight[first];
-  double tmp_vbw = value_by_weight[first];
+  double tmp_vbw = ks->value_by_weight[first];
 
   ks->value[first] = ks->value[second];
   ks->weight[first] = ks->weight[second];
-  value_by_weight[first] = value_by_weight[second];
+  ks->value_by_weight[first] = ks->value_by_weight[second];
 
   ks->value[second] = tmp_value;
   ks->weight[second] = tmp_weight;
-  value_by_weight[second] = tmp_vbw;
-}
-
-void print_knapsack(knapsack_t *ks)
-{
-  fprintf(stderr, "\"value\", \"weight\"\n");
-  for (int i = 0; i < ks->size; i++)
-    {
-      fprintf(stderr, "%f, %f\n", ks->value[i], ks->weight[i]);
-    }
+  ks->value_by_weight[second] = tmp_vbw;
 }
 
 void sort_knapsack(knapsack_t *ks)
 {
-  double *value_by_weight = malloc(sizeof(double) * ks->size);
-
   // Computing
   for (int i = 0; i < ks->size; i++)
     {
-      value_by_weight[i] = ks->value[i] / ks->weight[i];
+      ks->value_by_weight[i] = ks->value[i] / ks->weight[i];
     }
 
   u64 index = 0;
@@ -189,7 +201,7 @@ void sort_knapsack(knapsack_t *ks)
       // Search the maximum value by weight after i
       for (u64 j = i + 1; j < ks->size; j++)
         {
-          if (value_by_weight[index] < value_by_weight[j])
+          if (ks->value_by_weight[index] < ks->value_by_weight[j])
             {
               index = j;
             }
@@ -198,16 +210,50 @@ void sort_knapsack(knapsack_t *ks)
       // If we have we exchange it position with i
       if (i != index)
         {
-          exchange_knapsack(ks, value_by_weight, i, index);
+          exchange_knapsack(ks, i, index);
+        }
+    }
+}
+
+double compute_value_knapsack(knapsack_t *ks)
+{
+  double value = 0.0;
+
+  for (int i = 0; i < ks->size; i++)
+    {
+      if (ks->taken[i])
+        {
+          value += ks->value[i];
         }
     }
 
-  free(value_by_weight);
+  return value;
 }
 
-void solve_knapsack(knapsack_t *ks)
+void solve_knapsack(knapsack_t *ks, u64 index, double effective_weight)
 {
-  sort_knapsack(ks);
+  if (index >= ks->size)
+    return;
+
+  // Take index
+  ks->taken[index] = 1;
+  solve_knapsack(ks, index + 1, effective_weight + ks->weight[index]);
+  double value_taken = compute_value_knapsack(ks);
+
+  // Don't take index
+  ks->taken[index] = 0;
+  solve_knapsack(ks, index + 1, effective_weight);
+  double value_not_taken = compute_value_knapsack(ks);
+
+  // Choose best
+  if (effective_weight + ks->weight[index] <= ks->max_weight && value_taken > value_not_taken)
+    {
+      ks->taken[index] = 1;
+    }
+  else
+    {
+      ks->taken[index] = 0;
+    }
 }
 
 void print_error(char *bin)
@@ -224,6 +270,76 @@ void print_help(char *bin)
           " Use this csv file to init the knapsack solver.\n");
 }
 
+void print_nspace(u64 space)
+{
+  for (int i = 0; i < space; i++)
+    {
+      fprintf(stderr, " ");
+    }
+}
+
+void print_knapsack(knapsack_t *ks)
+{
+  // Problem
+  fprintf(stderr, "Knapsack problem input:\n");
+
+  fprintf(stderr, " - max weight: %f\n", ks->max_weight);
+
+  fprintf(stderr, " - file input:\n");
+  fprintf(stderr, "     \"value\", \"weight\"\n");
+
+  for (int i = 0; i < ks->size; i++)
+    {
+      fprintf(stderr, "     %f, %f\n", ks->value[i], ks->weight[i]);
+    }
+
+  // Separate
+  fprintf(stderr, "\n");
+
+  // Result
+  fprintf(stderr, "Result:\n");
+
+  double result = compute_value_knapsack(ks);
+  fprintf(stderr, " - max value: %f\n", result);
+
+  fprintf(stderr, " - list of value taken:\n");
+  fprintf(stderr, "     \"value\", \"weight\"\n");
+
+  for (int i = 0; i < ks->size; i++)
+    {
+      if (ks->taken[i])
+        fprintf(stderr, "     %f, %f\n", ks->value[i], ks->weight[i]);
+    }
+
+  fprintf(stderr, " - tree:\n");
+
+  u64 space = 30;
+  u64 shift = 3;
+
+  for (int i = 0; i < ks->size; i++)
+    {
+      print_nspace(space);
+      fprintf(stderr, "%.1f, %.1f\n", ks->value[i], ks->weight[i]);
+
+      if (ks->taken[i])
+        {
+          space -= 2;
+          print_nspace(space + shift);
+          fprintf(stderr, "/\n");
+          space -= 1;
+        }
+      else
+        {
+          space += 2;
+          print_nspace(space + shift);
+          fprintf(stderr, "\\\n");
+          space += 1;
+        }
+    }
+  print_nspace(space + shift);
+  fprintf(stderr, "FIN\n");
+}
+
 int main(int argc, char **argv)
 {
   if (argc < 2)
@@ -238,11 +354,11 @@ int main(int argc, char **argv)
       if (argc != 4)
         return print_error(argv[0]), 1;
 
-      knapsack_t *ks = parse_csv_file(argv[2]);
+      knapsack_t *ks = init_knapsack(argv[2], strtod(argv[3], NULL));
+      
+      sort_knapsack(ks);
+      solve_knapsack(ks, 0, 0.0);
 
-      ks->max_weight = atoll(argv[3]);
-
-      solve_knapsack(ks);
       print_knapsack(ks);
 
       free_knapsack(ks);
