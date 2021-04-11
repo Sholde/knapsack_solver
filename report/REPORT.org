@@ -126,7 +126,29 @@
 
 ** Problème du sac à dos
 
-   
+   Ma méthode était juste de faire un algorithme récursif naïf qui parcourais
+   toutes les branches et ne s'arrêter que lorsque toute les branches étaient
+   parcourus. Je voulais utiliser un tableau *taken* pour savoir si la pair
+   était prise mais j'ai vite compris que le résultat était faux en regardant la
+   sortie. Car à chaque nouveau parcour on éditait le tableau.
+
+   Donc pour savoir quel élément était pris, j'ai ajouté un tableau à la base de
+   taille *le nombre d'entrée*. Mais j'ai très vite remarqué que mon code ne
+   fonctionner plus correctement car j'aivais des problèmes de corruptions de
+   donnée (*free*). Le problème venait du fait qu'évidemenent il fallait mettre
+   comme taille de talbeau *le nombre de feuille* de l'arbre qui est 2 puissance
+   *le nombre de feuille* (ici 2 car on a un arbre binaire) car sinon on
+   dépassait dans la mémoire du tableau et donc on écrivait dans une autre case
+   mémoire (ce qui causait la corruption de donnée).
+
+   Ensuite lorsque l'on a ce tableau qui nous indique la valeur de chaque
+   chemin, comme dis en haut il suffit de trouver la valeur maximale car toutes
+   les valeurs positives sont réalisables. Et avec la technique que j'ai décris
+   en haut on peut retrouver le chemin.
+
+   Sinon il n'y a pas grand chose à dire. L'algorithme décris en haut donne les
+   grandes étapes de mon implémentations. Les commentaires peuvent le compléter
+   aussi.
 
 ** Affichage
 
