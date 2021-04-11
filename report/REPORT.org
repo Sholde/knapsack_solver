@@ -139,6 +139,60 @@
    Pour afficher l'arbre, j'ai juste jouer sur le fait de décaler de *n espace*
    à gauche ou à droite suivant si la pair était pris ou non.
 
+* Démonstation du code
+
+  Pour l'entrée suivante:
+
+#+BEGIN_SRC json
+"value", "weight"
+1.0, 0.1
+4.0, 1.1
+5.0, 1.9
+2.0, 2.2
+3.0, 4.0
+#+END_SRC
+
+  Et la ligne de commande suivante:
+
+#+BEGIN_SRC
+$ ./ks --input test.csv 5.2
+#+END_SRC
+
+  Nous obtenons:
+
+#+BEGIN_SRC json
+Knapsack problem input:
+ - max weight: 5.200000
+ - file input:
+     "value", "weight"
+     1.000000, 0.100000
+     4.000000, 1.100000
+     5.000000, 1.900000
+     2.000000, 2.200000
+     3.000000, 4.000000
+
+Result:
+ - max value: 11.000000
+ - list of pair taken:
+     "value", "weight"
+     4.000000, 1.100000
+     5.000000, 1.900000
+     2.000000, 2.200000
+ - tree:
+                              1.0, 0.1
+                                   \
+                                 4.0, 1.1
+                                  /
+                              5.0, 1.9
+                               /
+                           2.0, 2.2
+                            /
+                        3.0, 4.0
+                             \
+                              END
+Time in second(s): 0.000001
+#+END_SRC
+
 * Conclusion
 
   Pour conclure, le travail fait pour résoudre ce problème peut être améliorer
