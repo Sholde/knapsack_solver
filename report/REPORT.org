@@ -109,6 +109,11 @@
    réalité le language *C* est plus simple car on manipule dès objets très
    spécifiques.
 
+** Commentaire
+
+   Normalement le code est bien commenté (en anglais) donc vous devriez
+   comprendre le code.
+
 ** Lecteur csv
 
    Comme je l'ai dis dans l'intro, la première chose qui m'est venu à l'esprit
@@ -120,9 +125,19 @@
    *strtok*. Ensuite il suffisait juste de capturer le bon élément.
 
 ** Problème du sac à dos
-** Affichage
 
    
+
+** Affichage
+
+   Rien de particulier à dire. J'utilise la sortie d'erreur pour la sortie car
+   elle n'est pas bufferizé. J'affiche d'abord les entrées et ensuite j'aiffiche
+   la sortie qui est composé de 3 champs:
+   - la valeur maximale réalisable
+   - la liste des (valeur, poid) pris
+   - le chemin dans l'arbre de la valeur maximale réalisable
+   Pour afficher l'arbre, j'ai juste jouer sur le fait de décaler de *n espace*
+   à gauche ou à droite suivant si la pair était pris ou non.
 
 * Conclusion
 
@@ -130,3 +145,8 @@
   étant donné que l'algorithme pour le résoudre parcours tout les chemins,
   contrairement à l'algorithme que l'on a vu en cours qui parcourrait changeait
   le chenmin à parsourir à chaque étape.
+
+  Liste des fonctionnalités implémentés:
+  - lecteur de fichier *csv*
+  - résolution du problème du sac à dos
+  - affichage du chemin de l'arbre donnant la valeur maximale réalisable
