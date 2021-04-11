@@ -161,7 +161,7 @@ void print_knapsack(knapsack_t *ks)
   double result = compute_value_knapsack(ks);
   fprintf(stderr, " - max value: %f\n", result);
 
-  fprintf(stderr, " - list of value taken:\n");
+  fprintf(stderr, " - list of pair taken:\n");
   fprintf(stderr, "     \"value\", \"weight\"\n");
 
   for (int i = 0; i < ks->size; i++)
