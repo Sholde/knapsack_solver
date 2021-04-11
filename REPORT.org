@@ -1,0 +1,132 @@
+#+TITLE: Rapport du Projet d'ORO
+#+AUTHOR: Bouton Nicolas
+#+DATE: Avril 2021
+
+* But du projet
+
+  Le but du projet d'Optimisation et de Recherche Opérationnelle est
+  d'implémenter en *C* un algorithme de séparation et d'évaluation (Branch and
+  Bound) de notre choix.
+
+** Choix du problème à résoudre
+
+  J'ai personnellement choisis le problème du sac à dos pour sa simplicité et
+  du fait que j'ai tout de suite pensé à faire un lecteur de format csv pour ce
+  problème, que je décrirais plus tard.
+  
+* Problème du sac à dos
+
+  #+CAPTION: Problème du sac à dos
+  #+NAME: fig:probleme_du_sac_a_dos
+  #+ATTR_LATEX: :width 300px
+  [[./sac_a_dos.png]]
+
+  Le problème du sac à dos est de le remplir afin d'avoir une valeur
+  maximum sans exéder son poids maximum (ici 6). Pour ce faire il y a des pairs
+  d'objets avec des valeurs (ici en vertes) et des poids (ici en rouges).
+
+** Démonstration de l'algorithme implémenté
+*** Tri de valeur par poid
+
+    Mon algorithme tri d'abord les paires par valeur par poid. C'est à dire
+    qu'il tri en ordre décroissant les paires suivant leurs taux valeur/poids.
+
+**** Exemple
+    
+     Imaginons que nous ayons l'entrée suivante:
+
+#+BEGIN_SRC
+"value", "weight"
+3, 2
+4, 3
+1, 1
+8, 6
+5, 2
+#+END_SRC
+
+     Dans ce cas nous aurions des taux:
+
+#+BEGIN_SRC
+"rate"
+1.5
+1.333333
+1.0
+1.333333
+2.5
+#+END_SRC
+
+     L'algorithme de tri mettra la pair (5, 2) en premier, et déplacera la pair
+     (8, 6) d'un cran (car on ne change de place que si c'est strictement
+     supérieur):
+
+#+BEGIN_SRC
+"value", "weight"
+5, 2
+3, 2
+4, 3
+8, 6
+1, 1
+#+END_SRC
+
+*** Résolution par récursion
+
+    Le système de résolution par récursion est simple, à *gauche* de l'arbre on
+    prend la pair, à *droite* on ne prend pas la pair.
+    *Si on prend la pair*, alors il ne faut pas que le sac déborde sinon on
+    met la valeur à -1 pour dire que le sous arbre n'est pas réalisable (c'est
+    à dire que pour toute les noeuds suivant la solution reste
+    iréalisable). Si le sac ne déborde pas on continue. Si on arrive à la fin
+    alors on calcul la valeur du sac et on le stock dans un tableau suivant la
+    position de la feuille dans l'arbre.
+
+    #+CAPTION: Démonstration de l'arbre
+    #+NAME: fig:demo_arbre
+    #+ATTR_LATEX: :width 300px
+    [[./tree_demo.png]]
+
+    Sur les arrêtes on retrouve la valeur actuelle des éléments pris. A la fin
+    on vois un tableau qui contient les valeurs de chaque chemin ce qui nous
+    permettra ensuite de savoir quelle est la valeur maximal réalisable.
+
+*** Trouve le chemin de la valeur maximale possible
+
+    Maintenant qu'on a le tableaux contenant la valeur maximale de tout les
+    chemins. On peut trouver la valeur maximale réalisable qui est en fait la
+    valeur maximale car toutes les valeurs non réalisables sont à -1.
+    Ensuite pour savoir quel chemin à été parcourus on se base sur le fait que
+    c'est un arbre binaire et donc on a la propriété suivante:
+    - gauche (on prends) égale 0 modulo 2
+    - droite (on ne prends pas) égale 1 modulo 2
+    Dans ce cas on pars des feuilles et on remonte l'arbre pour savoir quelle
+    pair on a pris.
+
+* Choix d'implémentaion
+** Language
+
+   J'ai choisis le language *C* car c'est le language que j'ai le plus
+   utilisé. Le *C++* permet de manipuler les listes plus facilement mais il faut
+   faire un peu d'orienté objet que je ne maîtrise pas complètement. Et en
+   réalité le language *C* est plus simple car on manipule dès objets très
+   spécifiques.
+
+** Lecteur csv
+
+   Comme je l'ai dis dans l'intro, la première chose qui m'est venu à l'esprit
+   en voulant faire le problème du sac à dos était de faire un lecteur de
+   fichier csv. Afin de pouvoir mettre des donnée sur *exel* par exemple et les
+   exporter en format *csv*.
+   Je n'ai pas eu trop de problème avec cette partis étant donné que j'ai trouvé
+   une fonction qui me permet de séparé une ligne par un mot avec
+   *strtok*. Ensuite il suffisait juste de capturer le bon élément.
+
+** Problème du sac à dos
+** Affichage
+
+   
+
+* Conclusion
+
+  Pour conclure, le travail fait pour résoudre ce problème peut être améliorer
+  étant donné que l'algorithme pour le résoudre parcours tout les chemins,
+  contrairement à l'algorithme que l'on a vu en cours qui parcourrait changeait
+  le chenmin à parsourir à chaque étape.
